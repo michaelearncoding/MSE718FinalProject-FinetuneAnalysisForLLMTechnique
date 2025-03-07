@@ -60,7 +60,7 @@ OUTPUT_DIR = f"models/{MODEL_ID}-instruction-{args.method}"
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
-TRAIN_FILE = os.path.join(PROJECT_ROOT, "data", "alpaca_train_5k.jsonl")
+TRAIN_FILE = os.path.join(PROJECT_ROOT, "data", "alpaca_train.jsonl")
 # TRAIN_FILE = "data/alpaca_train.jsonl"
 print(f"数据文件路径: {TRAIN_FILE}")
 

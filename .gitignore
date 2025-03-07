@@ -1,0 +1,52 @@
+# 忽略外部评估框架
+llm-peft-compare/lm-evaluation-harness/
+llm-peft-compare/lm-evaluation-harness.backup/
+
+# 忽略模型权重文件（通常很大）
+llm-peft-compare/models/*/*.bin
+llm-peft-compare/models/*/*.safetensors
+llm-peft-compare/models/*/pytorch_model.bin
+llm-peft-compare/models/*/*/*.bin
+llm-peft-compare/models/*/*/*.safetensors
+
+# 保留模型配置文件
+!llm-peft-compare/models/*/config.json
+!llm-peft-compare/models/*/*/config.json
+!llm-peft-compare/models/*/adapter_config.json
+!llm-peft-compare/models/*/*/adapter_config.json
+
+# 忽略大型结果文件
+llm-peft-compare/results/raw_data/*.json
+
+# 常见的Python忽略项
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 虚拟环境
+venv/
+env/
+ENV/
+
+# 临时文件
+*.swp
+*.swo
+*~
+.DS_Store
