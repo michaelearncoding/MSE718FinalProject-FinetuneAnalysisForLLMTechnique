@@ -59,20 +59,21 @@ RESULTS_DIR="results/model_comparison"
 # 确定模型路径
 if [ "$MERGED" == "true" ]; then
     # 使用合并后的完整模型
-    MODEL_PATH="models/${MODEL_ID}-instruction-${METHOD}-merged"
+    CHECK_PATH="models/${MODEL_ID}-instruction-${METHOD}-merged"
+    MODEL_PATH="../models/${MODEL_ID}-instruction-${METHOD}-merged"
     MODEL_TYPE="${MODEL_ID}_${METHOD}_merged"
-    if [ ! -d "$MODEL_PATH" ]; then
-        echo "❌ 合并模型不存在: $MODEL_PATH"
+    if [ ! -d "$CHECK_PATH" ]; then
+        echo "❌ 合并模型不存在: $CHECK_PATH"
         echo "请先运行: python scripts/save_merged_model.py --model_size $MODEL_SIZE --method $METHOD"
         exit 1
     fi
 else
     # 使用微调适配器（评估脚本会自动加载基础模型和适配器）
-    if [ -d "models/${MODEL_ID}-instruction-${METHOD}/final" ]; then
-        MODEL_PATH="models/${MODEL_ID}-instruction-${METHOD}/final"
-        MODEL_TYPE="${MODEL_ID}_${METHOD}"
-    else
-        echo "❌ 微调模型不存在: models/${MODEL_ID}-instruction-${METHOD}/final"
+    CHECK_PATH="models/${MODEL_ID}-instruction-${METHOD}/final"
+    MODEL_PATH="../models/${MODEL_ID}-instruction-${METHOD}/final"
+    MODEL_TYPE="${MODEL_ID}_${METHOD}"
+    if [ ! -d "$CHECK_PATH" ]; then
+        echo "❌ 微调模型不存在: $CHECK_PATH"
         echo "请先完成模型微调"
         exit 1
     fi
@@ -84,19 +85,32 @@ echo "评估模型路径: $MODEL_PATH"
 echo "开始评估..."
 cd $EVAL_DIR
 
+# 获取当前工作目录的绝对路径
+CURRENT_DIR=$(pwd)
+PARENT_DIR=$(dirname "$CURRENT_DIR")
+
+# 根据是否为合并模型设置绝对路径
+if [ "$MERGED" == "true" ]; then
+    ABSOLUTE_MODEL_PATH="$PARENT_DIR/models/${MODEL_ID}-instruction-${METHOD}-merged"
+else
+    ABSOLUTE_MODEL_PATH="$PARENT_DIR/models/${MODEL_ID}-instruction-${METHOD}/final"
+fi
+
 # 构建评估命令
-CMD="python main.py --model hf --model_args pretrained=$MODEL_PATH"
+CMD="lm_eval --model hf --model_args pretrained=$ABSOLUTE_MODEL_PATH"
 
 # 针对MacOS的MPS优化
 if [ "$DEVICE" == "mps" ]; then
     # 在MPS上使用float16可能加速
     CMD="$CMD,dtype=float16"
     
+    # 不使用4bit量化，因为缺少bitsandbytes依赖
+    # CMD="$CMD,load_in_4bit=True"
+    
     # 较大模型可能需要负载优化
     if [[ "$MODEL_SIZE" == "medium" ]]; then
-        CMD="$CMD,load_in_4bit=True"
         BATCH_SIZE=1  # 减小批量大小
-        echo "⚠️ 大型模型在MPS上使用4bit量化和批量大小=1"
+        echo "⚠️ 大型模型在MPS上使用float16和批量大小=1"
     fi
 fi
 
