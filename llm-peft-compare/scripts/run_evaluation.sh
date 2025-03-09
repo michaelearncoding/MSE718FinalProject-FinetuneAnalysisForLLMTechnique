@@ -115,22 +115,58 @@ if [ "$DEVICE" == "mps" ]; then
 fi
 
 # 完成命令
-CMD="$CMD --tasks $TASKS --device $DEVICE --batch_size $BATCH_SIZE --output_path ../$RESULTS_DIR/${MODEL_TYPE}"
+OUTPUT_FILE="$PARENT_DIR/$RESULTS_DIR/${MODEL_TYPE}.json"
+LOG_FILE="$PARENT_DIR/eval_logs_${MODEL_TYPE}.log"
+
+# 将命令修改为同时输出到日志文件
+CMD="$CMD --tasks $TASKS --device $DEVICE --batch_size $BATCH_SIZE --output_path $OUTPUT_FILE"
 
 echo "执行命令: $CMD"
-eval $CMD
+# 运行命令并将输出同时保存到日志文件
+eval "$CMD" | tee "$LOG_FILE"
 
 # 检查结果是否成功生成
-RESULT_FILE="../$RESULTS_DIR/${MODEL_TYPE}.json"
-if [ -f "$RESULT_FILE" ]; then
-    echo "✓ 评估结果已保存: $RESULT_FILE"
+if [ -f "$OUTPUT_FILE" ]; then
+    echo "✓ 评估结果已保存: $OUTPUT_FILE"
     # 创建额外备份
-    cp "$RESULT_FILE" "../results/raw_data/${MODEL_TYPE}_$(date +%Y%m%d_%H%M%S).json"
+    cp "$OUTPUT_FILE" "$PARENT_DIR/results/raw_data/${MODEL_TYPE}_$(date +%Y%m%d_%H%M%S).json"
 else
-    echo "❌ 警告: 评估结果文件未生成: $RESULT_FILE"
+    echo "❌ 警告: 评估结果文件未生成: $OUTPUT_FILE"
+    
+    # 尝试查找可能生成的结果文件
+    POSSIBLE_RESULTS=$(find "$PARENT_DIR/$RESULTS_DIR" -name "*${MODEL_ID}*${METHOD}*" -type f | grep -i json)
+    if [ ! -z "$POSSIBLE_RESULTS" ]; then
+        echo "找到潜在的结果文件:"
+        echo "$POSSIBLE_RESULTS"
+        # 尝试复制第一个找到的结果文件
+        FIRST_RESULT=$(echo "$POSSIBLE_RESULTS" | head -n 1)
+        if [ ! -z "$FIRST_RESULT" ]; then
+            cp "$FIRST_RESULT" "$OUTPUT_FILE"
+            echo "✓ 已将结果文件复制到: $OUTPUT_FILE"
+        fi
+    else
+        echo "⚠️ 尝试从日志中提取评估结果..."
+        # 如果日志文件存在
+        if [ -f "$LOG_FILE" ]; then
+            # 使用紧急保存脚本提取结果
+            echo "使用紧急保存脚本从日志中提取结果..."
+            python "$PARENT_DIR/scripts/save_emergency_results.py" \
+                   --log_file "$LOG_FILE" \
+                   --output_file "$OUTPUT_FILE" \
+                   --create_backup
+                   
+            if [ -f "$OUTPUT_FILE" ]; then
+                echo "✓ 成功从日志中提取并保存了评估结果!"
+            else
+                echo "❌ 无法从日志提取评估结果。"
+            fi
+        else
+            echo "❌ 未找到日志文件: $LOG_FILE"
+        fi
+    fi
 fi
 
-cd ..
+cd $PARENT_DIR
 
 # 运行分析脚本
 echo ""
