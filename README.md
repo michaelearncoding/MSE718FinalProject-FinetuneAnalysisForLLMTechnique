@@ -131,11 +131,11 @@ If you use this code in your research, please cite:
 
 ```bibtex
 @misc{llm-peft-compare,
-  author = {Your Name},
+  author = {Michael Mai},
   title = {LLM Fine-tuning Analysis: A Comparative Study},
   year = {2025},
   publisher = {GitHub},
-  url = {https://github.com/yourusername/llm-peft-compare}
+  url = {https://github.com/michaelearncoding/MSE718FinalProject-FinetuneAnalysisForLLMTechnique/}
 }
 ```
 
