@@ -1,122 +1,147 @@
 # LLM Fine-tuning Analysis: A Comparative Study
 
-## Overview
+This repository contains scripts and notebooks for evaluating and comparing different fine-tuning approaches on language models, specifically focusing on Llama 3.2 1B and TinyLlama 1.1B.
 
-This repository contains the research and implementation for "A Comparative Analysis of Fine-tuning Techniques for Language Models," a project exploring different parameter-efficient fine-tuning methods across language models of varying sizes. Due to computational constraints, the current implementation focuses on Llama 3.2 (1B) and TinyLlama (1.1B) models.
+## Project Overview
 
-## Repository Structure
+This project investigates the effectiveness of different fine-tuning methods on language models, with a particular focus on:
+- Parameter-efficient fine-tuning (PEFT) methods
+- Impact of training data size on model performance
+- Catastrophic forgetting in fine-tuned models
+- Performance comparison across different model architectures
 
+## Requirements
+
+### Hardware Requirements
+- GPU with at least 16GB VRAM (Tesla T4 or equivalent recommended)
+- CUDA 12.4 or later
+- NVIDIA drivers 550.54.15 or later
+
+### Software Requirements
+- Python 3.8+
+- CUDA toolkit
+- PyTorch
+- Transformers library
+- Unsloth library
+- lm-evaluation-harness
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/llm-peft-compare.git
+cd llm-peft-compare
 ```
-├── evaluation_results/          # Evaluation outputs and metrics
-├── lm-evaluation-harness/       # Benchmark evaluation framework
-├── models/                      # Model weights and checkpoints
-├── scripts/                     # Evaluation and analysis scripts
-│   ├── analyze_results.py       # Processes and visualizes results
-│   ├── evaluate_models.sh       # Main evaluation script
-│   └── run_comparison.sh        # Comparison workflow
-├── results/                     # Processed results and visualizations
-│   ├── figures/                 # Generated charts and graphs
-│   └── model_comparison/        # Comparison data
-└── models_evaluation_record.md  # Detailed evaluation documentation
-```
 
-## Models Evaluated
-
-| Model | Parameters | Training Data Size | Fine-tuning Method |
-|-------|------------|-------------------|-------------------|
-
-
-## Evaluation Benchmarks
-
-The models were evaluated on the following tasks:
-
-1. **GSM8K** - Mathematical reasoning (multi-step grade school math problems)
-2. **HellaSwag** - Commonsense reasoning and situational understanding
-3. **MMLU High School Computer Science** - Domain knowledge in computer science
-
-## Setup and Usage
-
-### Requirements
-
-```
+2. Install dependencies:
+```bash
 pip install -r requirements.txt
 ```
 
-### Evaluation
-
-To evaluate a model:
-
+3. Install CUDA toolkit if not already installed:
 ```bash
-# Clone evaluation framework
-git clone https://github.com/EleutherAI/lm-evaluation-harness.git
-cd lm-evaluation-harness
-pip install -e .
-cd ..
+# For Ubuntu/Debian
+sudo apt-get install cuda-toolkit-12-4
 
-# Run evaluation
-python -m lm_eval \
-    --model hf \
-    --model_args pretrained=PATH_TO_MODEL \
-    --tasks hellaswag,gsm8k,mmlu_high_school_computer_science \
+# For macOS (using Homebrew)
+brew install cuda
+```
+
+## Usage
+
+### 1. Environment Setup
+
+First, check your CUDA installation and GPU status:
+```python
+# Check CUDA version
+!nvcc --version
+
+# Check GPU status
+!nvidia-smi
+```
+
+### 2. Model Evaluation
+
+To evaluate a model using the lm-evaluation-harness:
+
+```python
+# For base model evaluation
+python -m lm_eval --model hf \
+    --model_args pretrained={MODEL_DIR},dtype=float16 \
+    --tasks {TASKS} \
     --device cuda \
-    --batch_size 4 \
-    --output_path results/model_name.json
+    --batch_size 4
+
+# For fine-tuned model evaluation
+python -m lm_eval --model hf \
+    --model_args pretrained={MODEL_DIR} \
+    --tasks {TASKS} \
+    --device cuda \
+    --batch_size 4
 ```
 
-### Running Comparisons
+Replace `{MODEL_DIR}` with your model path and `{TASKS}` with your target tasks.
 
-```bash
-# Full comparison pipeline
-bash scripts/run_comparison.sh
+### 3. Available Tasks
 
-# Individual model evaluation
-bash scripts/evaluate_models.sh [model_size] [method] [merged]
-```
+The following tasks are supported:
+- GSM8K (mathematical reasoning)
+- HellaSwag (commonsense reasoning)
+- MMLU High School Computer Science (domain knowledge)
 
-## Research Focus
+### 4. Model Paths
 
-This project investigates several key research questions:
+Standard model paths used in the project:
+- Base Llama 3.2 1B: `/content/llama-3.2-1b-base`
+- Fine-tuned Llama 3.2 1B: `/content/llama-3.2-1b-merged`
+- TinyLlama 1.1B: `/models/tinyllama_1.1b-instruction-lora-merged`
 
-1. How do different parameter-efficient fine-tuning techniques affect model performance across various tasks?
-2. What are the trade-offs between mathematical reasoning, commonsense reasoning, and domain knowledge during fine-tuning?
-3. How does the base model architecture influence fine-tuning outcomes?
-4. What impact does training data size have on fine-tuning efficiency?
-
-Detailed results and analysis are available in the `models_evaluation_record.md` file.
-
-## Conclusions
-
-This research provides valuable insights into the trade-offs involved in fine-tuning smaller language models:
-
-1. **Base Model Quality Matters**: The quality of the base architecture significantly impacts performance, with different architectures showing varying capabilities despite similar parameter counts.
-
-2. **Fine-tuning Trade-offs**: Traditional fine-tuning can improve specific capabilities but often at the cost of others, showing interesting patterns of knowledge preservation and forgetting.
-
-3. **Parameter-Efficient Methods**: LoRA and QLoRA show promise for preserving more base model capabilities, with QLoRA offering comparable performance with reduced memory requirements.
-
-## Future Work
-
-- [ ] Evaluate more parameter-efficient fine-tuning methods (LoRA, QLoRA) on Llama 3.2 1B
-- [ ] Test mixed fine-tuning approaches to mitigate catastrophic forgetting
-- [ ] Explore the impact of different fine-tuning dataset sizes on model performance
-- [ ] Evaluate task-specific fine-tuning to optimize for particular capabilities
-- [ ] Expand to larger models as computing resources become available
-
-## Citation
-
-If you use this code or findings in your research, please cite:
+## Project Structure
 
 ```
-@mse{mai2025comparative,
-  author = {Mai, Qingda},
-  title = {A Comparative Analysis of Fine-tuning Techniques for Language Models},
-  year = {2025},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/michaelearncoding/MSE718FinalProject-FinetuneAnalysisForLLMTechnique}}
-}
+llm-peft-compare/
+├── notebooks/
+│   ├── 0.Colab&UnSloth_llma3.2_1B_qlora_mergedModel(2k).ipynb
+│   └── 1.Colab&Unsloth_llma3.2_evaluation.ipynb
+├── scripts/
+│   └── run_evaluation.sh
+├── models_evaluation_record.md
+└── requirements.txt
 ```
+
+## Evaluation Results
+
+Detailed evaluation results and comparisons can be found in `models_evaluation_record.md`.
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Citation
+
+If you use this code in your research, please cite:
+
+```bibtex
+@misc{llm-peft-compare,
+  author = {Your Name},
+  title = {LLM Fine-tuning Analysis: A Comparative Study},
+  year = {2025},
+  publisher = {GitHub},
+  url = {https://github.com/yourusername/llm-peft-compare}
+}
+```
+
+## Acknowledgments
+
+- Llama 3.2 model by Meta AI
+- TinyLlama by the TinyLlama team
+- Unsloth library for efficient fine-tuning
+- lm-evaluation-harness for model evaluation 
